@@ -293,6 +293,7 @@ export function App() {
       {/* 3. Book Add Modal (Yes24 / ISBN) */}
       {isAddModalOpen && (
         <BookAddModal
+          settings={settings}
           onClose={() => setIsAddModalOpen(false)}
           onAddBook={handleAddBook}
         />
