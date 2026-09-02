@@ -303,7 +303,20 @@ export function loadSettings(): AppSettings {
       saveSettings(DEFAULT_SETTINGS)
       return DEFAULT_SETTINGS
     }
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+    const loaded = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+
+    // Auto-migrate deprecated Gemini model names
+    const DEPRECATED_MODELS: Record<string, string> = {
+      'gemini-2.5-flash': 'gemini-3.6-flash',
+      'gemini-1.5-flash': 'gemini-3.6-flash',
+      'gemini-1.5-pro': 'gemini-2.5-pro'
+    }
+    if (loaded.geminiModel && DEPRECATED_MODELS[loaded.geminiModel]) {
+      loaded.geminiModel = DEPRECATED_MODELS[loaded.geminiModel]
+      saveSettings(loaded) // Persist the migration
+    }
+
+    return loaded
   } catch (err) {
     console.error('Failed to load settings from localStorage:', err)
     return DEFAULT_SETTINGS
