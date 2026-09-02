@@ -270,6 +270,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
                       <div
                         key={book.id}
                         onClick={() => onSelectBook(book)}
+                        title={`${book.title} - ${book.author} (${book.totalPages}p)`}
                         style={{
                           width: `${spineWidth}px`,
                           height: `${spineHeight}px`,
@@ -341,6 +342,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
                   <img
                     src={book.coverUrl}
                     alt={book.title}
+                    referrerPolicy="no-referrer"
                     className="book-card-cover-img"
                     onError={(e) => {
                       ;(e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80'

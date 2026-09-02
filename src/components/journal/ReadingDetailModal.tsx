@@ -317,6 +317,7 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
               <img
                 src={book.coverUrl}
                 alt={book.title}
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   ;(e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80'
