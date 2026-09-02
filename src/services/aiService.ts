@@ -53,7 +53,7 @@ async function callGeminiApi(
   systemInstruction: string,
   messages: AiMessage[]
 ): Promise<string> {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName || 'gemini-2.5-flash'}:generateContent?key=${apiKey}`
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName || 'gemini-3.6-flash'}:generateContent?key=${apiKey}`
 
   const contents = messages.map(msg => ({
     role: msg.role === 'assistant' ? 'model' : 'user',
@@ -172,7 +172,7 @@ API 키를 등록하신 후 심층적인 대화를 계속 나눠보세요!`
   }
 
   if (provider === 'gemini') {
-    return await callGeminiApi(apiKey, settings.geminiModel || 'gemini-2.5-flash', systemPrompt, fullMessages)
+    return await callGeminiApi(apiKey, settings.geminiModel || 'gemini-3.6-flash', systemPrompt, fullMessages)
   } else {
     return await callOpenAiApi(apiKey, systemPrompt, fullMessages)
   }
@@ -249,7 +249,7 @@ ${conversationText}
   if (provider === 'gemini') {
     rawJson = await callGeminiApi(
       apiKey,
-      settings.geminiModel || 'gemini-2.5-flash',
+      settings.geminiModel || 'gemini-3.6-flash',
       'You are an expert academic summarizer. Always respond in valid JSON.',
       [{ id: 'sum-1', role: 'user', content: summaryPrompt, timestamp: new Date().toISOString() }]
     )

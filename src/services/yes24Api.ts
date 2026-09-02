@@ -323,7 +323,7 @@ export function extractYes24GoodsId(url: string): string | null {
 /**
  * AI-assisted search for books using Google Gemini API
  */
-async function searchViaGemini(query: string, apiKey: string, model: string = 'gemini-2.5-flash'): Promise<Yes24SearchResult[]> {
+async function searchViaGemini(query: string, apiKey: string, model: string = 'gemini-3.6-flash'): Promise<Yes24SearchResult[]> {
   try {
     const prompt = `당신은 대한민국 최고 수준의 전문 도서 서지 정보 데이터베이스입니다.
 사용자 검색어: "${query}"

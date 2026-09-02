@@ -7,7 +7,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   geminiApiKey: '',
   openaiApiKey: '',
   selectedAiProvider: 'gemini',
-  geminiModel: 'gemini-2.5-flash',
+  geminiModel: 'gemini-3.6-flash',
   theme: 'wood',
   annualGoal: 24,
   userNickname: '독서가',

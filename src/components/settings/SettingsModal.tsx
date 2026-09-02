@@ -195,9 +195,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onChange={(e) => setFormData({ ...formData, geminiModel: e.target.value })}
                       className="text-xs px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
                     >
-                      <option value="gemini-2.5-flash">Gemini 2.5 Flash (초고속 & 수식 분석)</option>
-                      <option value="gemini-1.5-pro">Gemini 1.5 Pro (초고지능 심층 추론)</option>
-                      <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                      <option value="gemini-3.6-flash">Gemini 3.6 Flash (최신 고속 & 수식 분석)</option>
+                      <option value="gemini-2.5-pro">Gemini 2.5 Pro (심층 추론)</option>
+                      <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                     </select>
                   </div>
                 </div>
