@@ -16,10 +16,15 @@ import {
   Edit3,
   Bookmark,
   Share2,
-  Layers
+  Layers,
+  Copy,
+  Check,
+  History,
+  FunctionSquare
 } from 'lucide-react'
-import { Book, Quote, ActionItem, ReadingStatus } from '../../types/book'
+import { Book, Quote, ActionItem, ReadingStatus, ReadingSession, AiDiscussionInsight } from '../../types/book'
 import { LatexRenderer } from '../common/LatexRenderer'
+import { MathToolbar } from '../common/MathToolbar'
 
 interface ReadingDetailModalProps {
   book: Book
@@ -38,14 +43,36 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
   onOpenAiDiscussion,
   onOpenQuoteCard
 }) => {
-  const [activeTab, setActiveTab] = useState<'journal' | 'quotes' | 'actions' | 'info'>('journal')
+  const [activeTab, setActiveTab] = useState<'journal' | 'quotes' | 'actions' | 'sessions' | 'info'>('journal')
   const [isEditingReview, setIsEditingReview] = useState(false)
   const [editedReview, setEditedReview] = useState(book.review)
+  const [activeEditorField, setActiveEditorField] = useState<'summary' | 'rawMarkdown' | 'quote' | null>('summary')
+
+  // Quotes state
   const [newQuoteText, setNewQuoteText] = useState('')
   const [newQuotePage, setNewQuotePage] = useState('')
   const [newQuoteNote, setNewQuoteNote] = useState('')
+
+  // Action Items state
   const [newActionText, setNewActionText] = useState('')
   const [newActionDate, setNewActionDate] = useState('')
+
+  // N-th Reading Session state
+  const [newSessionRound, setNewSessionRound] = useState((book.sessions?.length || 0) + 1)
+  const [newSessionStart, setNewSessionStart] = useState(new Date().toISOString().slice(0, 10))
+  const [newSessionEnd, setNewSessionEnd] = useState(new Date().toISOString().slice(0, 10))
+  const [newSessionNotes, setNewSessionNotes] = useState('')
+  const [isAddingSession, setIsAddingSession] = useState(false)
+
+  // Direct AI Insight Add state
+  const [isAddingInsight, setIsAddingInsight] = useState(false)
+  const [insightTitle, setInsightTitle] = useState('')
+  const [insightSummary, setInsightSummary] = useState('')
+  const [insightKeyPoints, setInsightKeyPoints] = useState('')
+  const [insightFormulas, setInsightFormulas] = useState('')
+
+  // Copied toast state
+  const [copiedInsightId, setCopiedInsightId] = useState<string | null>(null)
 
   // Handle Review Save
   const handleSaveReview = () => {
@@ -55,6 +82,23 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
       updatedAt: new Date().toISOString()
     })
     setIsEditingReview(false)
+  }
+
+  // Insert formula into active field
+  const handleInsertMath = (latexCode: string) => {
+    if (activeEditorField === 'summary') {
+      setEditedReview((prev) => ({
+        ...prev,
+        summary: prev.summary ? `${prev.summary} ${latexCode}` : latexCode
+      }))
+    } else if (activeEditorField === 'rawMarkdown') {
+      setEditedReview((prev) => ({
+        ...prev,
+        rawMarkdown: prev.rawMarkdown ? `${prev.rawMarkdown} ${latexCode}` : latexCode
+      }))
+    } else if (activeEditorField === 'quote') {
+      setNewQuoteText((prev) => (prev ? `${prev} ${latexCode}` : latexCode))
+    }
   }
 
   // Handle Status Change
@@ -163,6 +207,74 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
     })
   }
 
+  // Add Reading Session (N회독)
+  const handleAddSession = (e: React.FormEvent) => {
+    e.preventDefault()
+    const newSession: ReadingSession = {
+      id: 'sess-' + Date.now(),
+      round: newSessionRound,
+      startDate: newSessionStart,
+      completedDate: newSessionEnd || undefined,
+      notes: newSessionNotes.trim() || undefined
+    }
+
+    onUpdateBook({
+      ...book,
+      sessions: [...(book.sessions || []), newSession],
+      updatedAt: new Date().toISOString()
+    })
+
+    setIsAddingSession(false)
+    setNewSessionNotes('')
+    setNewSessionRound((book.sessions?.length || 0) + 2)
+  }
+
+  // Delete Session
+  const handleDeleteSession = (sessionId: string) => {
+    onUpdateBook({
+      ...book,
+      sessions: (book.sessions || []).filter((s) => s.id !== sessionId),
+      updatedAt: new Date().toISOString()
+    })
+  }
+
+  // Add Manual AI Insight
+  const handleAddManualInsight = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!insightTitle.trim() || !insightSummary.trim()) return
+
+    const points = insightKeyPoints
+      .split('\n')
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0)
+
+    const formulas = insightFormulas
+      .split('\n')
+      .map((f) => f.trim().replace(/^\$\$|\$\$$/g, ''))
+      .filter((f) => f.length > 0)
+
+    const newInsight: AiDiscussionInsight = {
+      id: 'insight-' + Date.now(),
+      title: insightTitle.trim(),
+      summary: insightSummary.trim(),
+      keyPoints: points,
+      mathematicalFormulas: formulas,
+      createdAt: new Date().toISOString()
+    }
+
+    onUpdateBook({
+      ...book,
+      aiInsights: [newInsight, ...(book.aiInsights || [])],
+      updatedAt: new Date().toISOString()
+    })
+
+    setIsAddingInsight(false)
+    setInsightTitle('')
+    setInsightSummary('')
+    setInsightKeyPoints('')
+    setInsightFormulas('')
+  }
+
   // Remove AI Insight
   const handleDeleteAiInsight = (insightId: string) => {
     onUpdateBook({
@@ -170,6 +282,18 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
       aiInsights: book.aiInsights.filter((ins) => ins.id !== insightId),
       updatedAt: new Date().toISOString()
     })
+  }
+
+  // Copy Insight to Clipboard
+  const handleCopyInsight = (insight: AiDiscussionInsight) => {
+    const text = `💡 [${insight.title}]\n\n${insight.summary}\n\n핵심 통찰:\n${insight.keyPoints.map((p) => `• ${p}`).join('\n')}${
+      insight.mathematicalFormulas && insight.mathematicalFormulas.length > 0
+        ? `\n\n수식:\n${insight.mathematicalFormulas.map((f) => `$$${f}$$`).join('\n')}`
+        : ''
+    }`
+    navigator.clipboard.writeText(text)
+    setCopiedInsightId(insight.id)
+    setTimeout(() => setCopiedInsightId(null), 2000)
   }
 
   // Reading Days Duration
@@ -195,7 +319,7 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
                 alt={book.title}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  ;(e.target as HTMLElement).style.display = 'none'
+                  ;(e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80'
                 }}
               />
             </div>
@@ -214,6 +338,12 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
                 {book.isbn && (
                   <span className="text-xs font-mono text-[var(--text-muted)]">
                     ISBN: {book.isbn}
+                  </span>
+                )}
+                {book.sessions && book.sessions.length > 0 && (
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                    <History className="w-3 h-3" />
+                    <span>{book.sessions.length}회독 완료</span>
                   </span>
                 )}
               </div>
@@ -266,7 +396,7 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => onOpenAiDiscussion(book)}
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white text-xs font-medium flex items-center gap-1.5 shadow-sm transition-all"
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white text-xs font-medium flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
               title="AI와 책에 대해 심층 토론하기"
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -283,10 +413,10 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
 
         {/* Modal Navigation Tabs */}
         <div className="flex items-center justify-between border-b border-[var(--border-color)] px-4 sm:px-6 bg-[var(--bg-surface)]">
-          <div className="flex gap-4">
+          <div className="flex gap-4 overflow-x-auto pb-1 sm:pb-0">
             <button
               onClick={() => setActiveTab('journal')}
-              className={`py-3 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-1.5 transition-all ${
+              className={`py-3 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-1.5 whitespace-nowrap transition-all ${
                 activeTab === 'journal'
                   ? 'border-amber-500 text-amber-600 dark:text-amber-400'
                   : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -298,7 +428,7 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
 
             <button
               onClick={() => setActiveTab('quotes')}
-              className={`py-3 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-1.5 transition-all ${
+              className={`py-3 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-1.5 whitespace-nowrap transition-all ${
                 activeTab === 'quotes'
                   ? 'border-amber-500 text-amber-600 dark:text-amber-400'
                   : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -310,7 +440,7 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
 
             <button
               onClick={() => setActiveTab('actions')}
-              className={`py-3 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-1.5 transition-all ${
+              className={`py-3 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-1.5 whitespace-nowrap transition-all ${
                 activeTab === 'actions'
                   ? 'border-amber-500 text-amber-600 dark:text-amber-400'
                   : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -321,15 +451,27 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab('sessions')}
+              className={`py-3 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-1.5 whitespace-nowrap transition-all ${
+                activeTab === 'sessions'
+                  ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                  : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <History className="w-4 h-4" />
+              <span>N회독 이력 ({book.sessions?.length || 0})</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('info')}
-              className={`py-3 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-1.5 transition-all ${
+              className={`py-3 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-1.5 whitespace-nowrap transition-all ${
                 activeTab === 'info'
                   ? 'border-amber-500 text-amber-600 dark:text-amber-400'
                   : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
             >
               <Layers className="w-4 h-4" />
-              <span>목차 & 책 정보</span>
+              <span>목차 & 정보</span>
             </button>
           </div>
 
@@ -403,8 +545,11 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
                 <div className="p-4 sm:p-5 rounded-xl border border-amber-500/30 bg-[var(--bg-surface-secondary)] space-y-4">
                   <h3 className="text-sm font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                     <Edit3 className="w-4 h-4" />
-                    <span>구조화 독서 감상문 작성</span>
+                    <span>구조화 독서 감상문 작성 (LaTeX 수식 지원)</span>
                   </h3>
+
+                  {/* Math Toolbar Integration */}
+                  <MathToolbar onInsert={handleInsertMath} />
 
                   <div>
                     <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
@@ -435,11 +580,12 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
 
                     <div>
                       <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                        💡 [핵심 요약 & 주요 수식/개념] (LaTeX 지원)
+                        💡 [핵심 요약 & 주요 수식/개념] ($...$ / $$...$$)
                       </label>
                       <textarea
                         rows={3}
                         value={editedReview.summary}
+                        onFocus={() => setActiveEditorField('summary')}
                         onChange={(e) => setEditedReview({ ...editedReview, summary: e.target.value })}
                         placeholder="저자가 전달하고자 하는 핵심 논리와 수식 ($...$ / $$...$$)"
                         className="w-full px-3 py-2 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)] focus:outline-none focus:border-amber-500 font-mono"
@@ -482,6 +628,7 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
                     <textarea
                       rows={5}
                       value={editedReview.rawMarkdown || ''}
+                      onFocus={() => setActiveEditorField('rawMarkdown')}
                       onChange={(e) => setEditedReview({ ...editedReview, rawMarkdown: e.target.value })}
                       placeholder="자유롭게 기록할 메모나 증명 과정, 수식 유도 ($...$, $$...$$)"
                       className="w-full px-3 py-2 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)] focus:outline-none focus:border-amber-500 font-mono"
@@ -572,7 +719,7 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
                   REQUIREMENT 5: AI 심층 토론 및 핵심 통찰 정리 섹션 (Saved at bottom)
                   ========================================================================= */}
               <div className="pt-4 border-t-2 border-[var(--border-color)]">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400">
                       <Sparkles className="w-4 h-4" />
@@ -587,30 +734,104 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => onOpenAiDiscussion(book)}
-                    className="px-3 py-1 text-xs rounded-lg border border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 font-medium flex items-center gap-1 transition-all"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span>새 토론 시작</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsAddingInsight(!isAddingInsight)}
+                      className="px-2.5 py-1 text-xs rounded-lg border border-[var(--border-color)] hover:border-amber-500 text-[var(--text-secondary)] hover:text-amber-600 font-medium flex items-center gap-1 transition-all"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>{isAddingInsight ? '직접 추가 닫기' : '통찰 직접 추가'}</span>
+                    </button>
+                    <button
+                      onClick={() => onOpenAiDiscussion(book)}
+                      className="px-3 py-1 text-xs rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium flex items-center gap-1 transition-all shadow-sm"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>새 AI 토론 시작</span>
+                    </button>
+                  </div>
                 </div>
 
+                {/* Direct Manual Insight Form */}
+                {isAddingInsight && (
+                  <form onSubmit={handleAddManualInsight} className="p-4 rounded-xl bg-[var(--bg-surface-secondary)] border border-amber-500/30 space-y-3 mb-4">
+                    <h4 className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                      ✏️ 새 심층 통찰 직접 작성
+                    </h4>
+                    <input
+                      type="text"
+                      placeholder="통찰 제목 (예: 뉴턴 냉각 법칙과 열교환 모델 확장성)"
+                      value={insightTitle}
+                      onChange={(e) => setInsightTitle(e.target.value)}
+                      required
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
+                    />
+                    <textarea
+                      rows={2}
+                      placeholder="핵심 요약 내용 (수식 $...$ / $$...$$ 지원)"
+                      value={insightSummary}
+                      onChange={(e) => setInsightSummary(e.target.value)}
+                      required
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)] font-mono"
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <textarea
+                        rows={3}
+                        placeholder="핵심 포인트 (줄 단위로 입력)"
+                        value={insightKeyPoints}
+                        onChange={(e) => setInsightKeyPoints(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
+                      />
+                      <textarea
+                        rows={3}
+                        placeholder="LaTeX 수식 (줄 단위로 입력, 예: \frac{dT}{dt} = -k(T-T_a))"
+                        value={insightFormulas}
+                        onChange={(e) => setInsightFormulas(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)] font-mono"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingInsight(false)}
+                        className="px-3 py-1 text-xs rounded-lg border border-[var(--border-color)]"
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-1 text-xs rounded-lg bg-amber-600 text-white font-semibold"
+                      >
+                        통찰 저장
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Insights List */}
                 {book.aiInsights && book.aiInsights.length > 0 ? (
                   <div className="space-y-4">
                     {book.aiInsights.map((insight) => (
                       <div key={insight.id} className="ai-insight-box">
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <h4 className="font-serif font-bold text-sm text-[var(--text-primary)]">
-                            {insight.title}
+                          <h4 className="font-serif font-bold text-sm text-[var(--text-primary)] flex items-center gap-1.5">
+                            <Sparkles className="w-4 h-4 text-amber-500" />
+                            <span>{insight.title}</span>
                           </h4>
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] text-[var(--text-muted)]">
                               {new Date(insight.createdAt).toLocaleDateString('ko-KR')}
                             </span>
                             <button
+                              onClick={() => handleCopyInsight(insight)}
+                              className="text-[var(--text-muted)] hover:text-amber-600 transition-colors p-1"
+                              title="통찰 내용 복사"
+                            >
+                              {copiedInsightId === insight.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
                               onClick={() => handleDeleteAiInsight(insight.id)}
-                              className="text-[var(--text-muted)] hover:text-rose-500 transition-colors"
+                              className="text-[var(--text-muted)] hover:text-rose-500 transition-colors p-1"
                               title="통찰 삭제"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -696,8 +917,10 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
               <form onSubmit={handleAddQuote} className="p-4 rounded-xl bg-[var(--bg-surface-secondary)] border border-[var(--border-color)] space-y-3">
                 <h4 className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                   <Plus className="w-3.5 h-3.5" />
-                  <span>새로운 밑줄 문장 추가</span>
+                  <span>새로운 밑줄 문장 추가 (LaTeX 수식 지원)</span>
                 </h4>
+
+                <MathToolbar onInsert={(code) => setNewQuoteText((prev) => (prev ? `${prev} ${code}` : code))} />
 
                 <div className="flex gap-2">
                   <div className="w-24">
@@ -868,7 +1091,145 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
             </div>
           )}
 
-          {/* TAB 4: 목차 & 도서 기본 정보 (Info & TOC) */}
+          {/* TAB 4: N회독 이력 관리 (Reading Sessions) */}
+          {activeTab === 'sessions' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-1.5 font-serif">
+                    <History className="w-4 h-4 text-amber-600" />
+                    <span>N회독(재독) 이력 기록 관리</span>
+                  </h4>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    동일한 도서를 다시 읽을 때마다 차수별(1회독, 2회독...) 독서 기간과 메모를 누적합니다.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setIsAddingSession(!isAddingSession)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1 shadow-sm transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ {((book.sessions?.length || 0) + 1)}회독 추가</span>
+                </button>
+              </div>
+
+              {/* Add Session Form */}
+              {isAddingSession && (
+                <form onSubmit={handleAddSession} className="p-4 rounded-xl bg-[var(--bg-surface-secondary)] border border-amber-500/30 space-y-3">
+                  <h5 className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                    📖 {newSessionRound}회독 이력 작성
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                        독서 회차
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={newSessionRound}
+                        onChange={(e) => setNewSessionRound(parseInt(e.target.value) || 1)}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)] font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                        시작일
+                      </label>
+                      <input
+                        type="date"
+                        value={newSessionStart}
+                        onChange={(e) => setNewSessionStart(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                        완독일
+                      </label>
+                      <input
+                        type="date"
+                        value={newSessionEnd}
+                        onChange={(e) => setNewSessionEnd(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                      이번 회독에서의 새로운 깨달음이나 감상
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="다시 읽으며 새롭게 눈에 들어온 부분..."
+                      value={newSessionNotes}
+                      onChange={(e) => setNewSessionNotes(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)]"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingSession(false)}
+                      className="px-3 py-1 text-xs rounded-lg border border-[var(--border-color)]"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-1 text-xs rounded-lg bg-amber-600 text-white font-semibold"
+                    >
+                      회독 기록 저장
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Sessions List */}
+              <div className="space-y-3">
+                {book.sessions && book.sessions.length > 0 ? (
+                  book.sessions.map((sess) => (
+                    <div
+                      key={sess.id}
+                      className="p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-sm flex items-start justify-between gap-3"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded font-bold text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                            {sess.round}회독
+                          </span>
+                          <span className="text-xs text-[var(--text-muted)] flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {sess.startDate} ~ {sess.completedDate || '(진행 중)'}
+                          </span>
+                        </div>
+                        {sess.notes && (
+                          <p className="text-xs text-[var(--text-secondary)] font-serif italic pt-1">
+                            "{sess.notes}"
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteSession(sess.id)}
+                        className="text-[var(--text-muted)] hover:text-rose-500 transition-colors p-1"
+                        title="회독 기록 삭제"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center py-6 text-xs text-[var(--text-muted)]">
+                    등록된 N회독 이력이 없습니다.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: 목차 & 도서 기본 정보 (Info & TOC) */}
           {activeTab === 'info' && (
             <div className="space-y-4 text-xs sm:text-sm text-[var(--text-secondary)]">
               {book.toc && (

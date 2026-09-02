@@ -66,6 +66,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
         if (statusFilter === 'reading' && book.status !== 'reading') return false
         if (statusFilter === 'completed' && book.status !== 'completed') return false
         if (statusFilter === 'wishlist' && book.status !== 'wishlist') return false
+        if (statusFilter === 'multiple' && (!book.sessions || book.sessions.length < 2)) return false
 
         // Favorites only
         if (onlyFavorites && !book.isFavorite) return false
@@ -161,6 +162,20 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
             }`}
           >
             🔖 위시리스트 ({books.filter((b) => b.status === 'wishlist').length})
+          </button>
+
+          <button
+            onClick={() => {
+              setStatusFilter('multiple')
+              setOnlyFavorites(false)
+            }}
+            className={`px-3 py-1 text-xs rounded-lg font-medium transition-all ${
+              statusFilter === 'multiple' && !onlyFavorites
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-[var(--bg-surface-secondary)] text-[var(--text-secondary)] hover:bg-indigo-500/10'
+            }`}
+          >
+            🔁 N회독 ({books.filter((b) => b.sessions && b.sessions.length > 1).length})
           </button>
 
           <button
