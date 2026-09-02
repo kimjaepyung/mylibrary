@@ -1,0 +1,416 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   Design Tokens & CSS Variables
+   ========================================================================== */
+
+:root {
+  /* Fonts */
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Noto Serif KR', 'Playfair Display', Georgia, serif;
+  --font-mono: 'Fira Code', monospace;
+  --font-display: 'Outfit', 'Pretendard', sans-serif;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 350ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Elevation Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-book: -4px 0 8px rgba(0, 0, 0, 0.3), 4px 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   Theme: Warm Wood Classic (Default)
+   ========================================================================== */
+[data-theme="wood"] {
+  --bg-app: #f5efe6;
+  --bg-surface: #ffffff;
+  --bg-surface-secondary: #fbf8f3;
+  --bg-card: #ffffff;
+  --bg-shelf-wood: linear-gradient(180deg, #5c3a21 0%, #3e2716 100%);
+  --bg-shelf-plank: #4a2e18;
+  --border-shelf: #2c1a0e;
+  
+  --border-color: #e6ded3;
+  --border-color-focus: #c29b38;
+
+  --text-primary: #2d241e;
+  --text-secondary: #63584e;
+  --text-muted: #9c9085;
+
+  --accent-primary: #b45309;
+  --accent-primary-hover: #92400e;
+  --accent-secondary: #c29b38;
+  --accent-gold: #d97706;
+  --accent-bg: #fef3c7;
+  --accent-text: #92400e;
+
+  --badge-completed: #166534;
+  --badge-completed-bg: #dcfce7;
+  --badge-reading: #1e40af;
+  --badge-reading-bg: #dbeafe;
+  --badge-wishlist: #854d0e;
+  --badge-wishlist-bg: #fef9c3;
+
+  --header-bg: rgba(245, 239, 230, 0.85);
+  --modal-overlay: rgba(30, 20, 10, 0.6);
+}
+
+/* ==========================================================================
+   Theme: Midnight Dark & Glassmorphism
+   ========================================================================== */
+[data-theme="midnight"] {
+  --bg-app: #090d16;
+  --bg-surface: #111827;
+  --bg-surface-secondary: #1a2234;
+  --bg-card: #131b2e;
+  --bg-shelf-wood: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --bg-shelf-plank: #1e293b;
+  --border-shelf: #0a0f1d;
+
+  --border-color: #27354f;
+  --border-color-focus: #f59e0b;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --accent-primary: #f59e0b;
+  --accent-primary-hover: #fbbf24;
+  --accent-secondary: #38bdf8;
+  --accent-gold: #fbbf24;
+  --accent-bg: rgba(245, 158, 11, 0.15);
+  --accent-text: #fde68a;
+
+  --badge-completed: #4ade80;
+  --badge-completed-bg: rgba(74, 222, 128, 0.15);
+  --badge-reading: #60a5fa;
+  --badge-reading-bg: rgba(96, 165, 250, 0.15);
+  --badge-wishlist: #facc15;
+  --badge-wishlist-bg: rgba(250, 204, 21, 0.15);
+
+  --header-bg: rgba(9, 13, 22, 0.85);
+  --modal-overlay: rgba(0, 0, 0, 0.8);
+}
+
+/* ==========================================================================
+   Global Reset & Base Styles
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  transition: background-color var(--transition-smooth), color var(--transition-smooth);
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ==========================================================================
+   Typography & Utilities
+   ========================================================================== */
+.font-serif {
+  font-family: var(--font-serif);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* ==========================================================================
+   Header & Navigation
+   ========================================================================== */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--header-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  transition: all var(--transition-normal);
+}
+
+/* ==========================================================================
+   Realistic 3D Bookshelf View
+   ========================================================================== */
+.bookshelf-container {
+  padding: 2rem 0;
+}
+
+.bookshelf-row {
+  position: relative;
+  margin-bottom: 3.5rem;
+  padding: 0 1.5rem;
+}
+
+.bookshelf-books {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  min-height: 240px;
+  padding-bottom: 0px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-right: 2rem;
+  scroll-behavior: smooth;
+}
+
+/* Book Spine (3D Realistic Spine on Shelf) */
+.book-spine {
+  position: relative;
+  border-radius: 3px 5px 3px 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 6px;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.4), 2px 0 3px rgba(0, 0, 0, 0.2), inset 1px 0 2px rgba(255, 255, 255, 0.2);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.book-spine:hover {
+  transform: translateY(-16px) scale(1.03);
+  box-shadow: -4px 10px 20px rgba(0, 0, 0, 0.5), 0 0 12px var(--accent-gold);
+  z-index: 10;
+}
+
+.book-spine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.book-spine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 3px;
+  width: 2px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.book-spine-title {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  max-height: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-spine-author {
+  writing-mode: vertical-rl;
+  font-size: 0.7rem;
+  opacity: 0.85;
+  max-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Wood Plank */
+.bookshelf-plank {
+  height: 22px;
+  background: var(--bg-shelf-wood);
+  border-radius: 4px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2), inset 0 2px 2px rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-shelf);
+  position: relative;
+  margin-top: -2px;
+}
+
+.bookshelf-plank::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  filter: blur(4px);
+}
+
+/* ==========================================================================
+   Book Card (Grid View)
+   ========================================================================== */
+.book-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--accent-secondary);
+}
+
+.book-card-cover-wrapper {
+  position: relative;
+  aspect-ratio: 1 / 1.42;
+  background: #232323;
+  overflow: hidden;
+}
+
+.book-card-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-smooth);
+}
+
+.book-card:hover .book-card-cover-img {
+  transform: scale(1.04);
+}
+
+/* ==========================================================================
+   Modal Dialogs & Glassmorphism
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-overlay);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-2xl);
+  width: 100%;
+  max-width: 880px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ==========================================================================
+   LaTeX Math Equations
+   ========================================================================== */
+.latex-block {
+  padding: 0.75rem 1rem;
+  background: var(--bg-surface-secondary);
+  border-left: 3px solid var(--accent-primary);
+  border-radius: 6px;
+  margin: 0.75rem 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+}
+
+.latex-inline {
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   Reading Journal Specific Styles
+   ========================================================================== */
+.quote-card {
+  background: var(--bg-surface-secondary);
+  border-left: 4px solid var(--accent-gold);
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.25rem;
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.quote-card:hover {
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+  transform: translateX(4px);
+}
+
+/* AI Insight Box in Book Detail (Requirement 5) */
+.ai-insight-box {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+/* Star Rating */
+.star-rating {
+  display: inline-flex;
+  gap: 2px;
+  color: #fbbf24;
+}
+
+/* Tags */
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--accent-bg);
+  color: var(--accent-text);
+}
