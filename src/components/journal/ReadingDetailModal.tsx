@@ -495,7 +495,7 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-190px)] space-y-6">
+        <div className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-6">
           
           {/* TAB 1: 독서 기록 및 서평 (Journal & Review) */}
           {activeTab === 'journal' && (

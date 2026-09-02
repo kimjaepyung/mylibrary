@@ -192,7 +192,7 @@ export const BookAddModal: React.FC<BookAddModalProps> = ({ onClose, onAddBook }
         </div>
 
         {/* Scrollable Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-6">
+        <div className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-6">
           
           {/* Section 1: Yes24 & ISBN Search Bar */}
           <div className="p-4 rounded-xl bg-[var(--bg-surface-secondary)] border border-amber-500/30 space-y-3">
@@ -237,9 +237,10 @@ export const BookAddModal: React.FC<BookAddModalProps> = ({ onClose, onAddBook }
                         <img
                           src={result.coverUrl}
                           alt={result.title}
+                          referrerPolicy="no-referrer"
                           className="w-10 h-14 object-cover rounded shadow-sm flex-shrink-0 bg-zinc-800"
                           onError={(e) => {
-                            ;(e.target as HTMLElement).style.display = 'none'
+                            ;(e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80'
                           }}
                         />
                         <div className="flex-1 min-w-0">
