@@ -13,7 +13,8 @@ import {
   ArrowUpDown,
   Filter,
   Layers,
-  MessageSquareQuote
+  MessageSquareQuote,
+  Table
 } from 'lucide-react'
 import { Book, ReadingStatus } from '../../types/book'
 import { LatexRenderer } from '../common/LatexRenderer'
@@ -33,7 +34,7 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
   onSelectBook,
   onOpenAiDiscussion
 }) => {
-  const [viewMode, setViewMode] = useState<'shelf' | 'grid' | 'timeline'>('shelf')
+  const [viewMode, setViewMode] = useState<'shelf' | 'grid' | 'table' | 'timeline'>('shelf')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [sortBy, setSortBy] = useState<'completedDate' | 'rating' | 'title' | 'pages'>('completedDate')
   const [onlyFavorites, setOnlyFavorites] = useState(false)
@@ -232,6 +233,18 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
               title="표지 카드 갤러리 뷰"
             >
               <Grid className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-md transition-all ${
+                viewMode === 'table'
+                  ? 'bg-[var(--bg-surface)] text-amber-600 shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+              title="목록 테이블 뷰 (데이터 시트)"
+            >
+              <Table className="w-4 h-4" />
             </button>
 
             <button
@@ -473,6 +486,151 @@ export const BookshelfView: React.FC<BookshelfViewProps> = ({
         </div>
       )}
 
+      {/* =========================================================================
+          VIEW MODE 3: 목록 테이블 뷰 (List Table View / Data Sheet)
+          ========================================================================= */}
+      {viewMode === 'table' && (
+        <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-color)] overflow-hidden shadow-xs">
+          {filteredBooks.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-[var(--text-secondary)]">
+                <thead className="bg-[var(--bg-app)]/60 text-[var(--text-muted)] text-[11px] uppercase border-b border-[var(--border-color)]">
+                  <tr>
+                    <th scope="col" className="px-4 py-3">도서 정보</th>
+                    <th scope="col" className="px-4 py-3">저자 / 출판사</th>
+                    <th scope="col" className="px-3 py-3">분야</th>
+                    <th scope="col" className="px-4 py-3">독서 진도</th>
+                    <th scope="col" className="px-3 py-3">평점</th>
+                    <th scope="col" className="px-3 py-3">ISBN</th>
+                    <th scope="col" className="px-3 py-3 text-right">링크</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-color)]/60">
+                  {filteredBooks.map((book) => {
+                    const progressPct = Math.min(
+                      100,
+                      Math.round((book.currentPage / (book.totalPages || 1)) * 100)
+                    )
+
+                    return (
+                      <tr
+                        key={book.id}
+                        onClick={() => onSelectBook(book)}
+                        className="hover:bg-amber-500/5 cursor-pointer transition-colors group"
+                      >
+                        {/* Title & Thumbnail */}
+                        <td className="px-4 py-3 flex items-center gap-3">
+                          <div className="w-9 h-12 rounded overflow-hidden shrink-0 bg-zinc-800 shadow-xs border border-[var(--border-color)]">
+                            <img
+                              src={book.coverUrl}
+                              alt={book.title}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                ;(e.target as HTMLImageElement).src =
+                                  'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80'
+                              }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              {book.isFavorite && (
+                                <span className="text-rose-500 text-xs">❤️</span>
+                              )}
+                              <span className="font-serif font-bold text-xs sm:text-sm text-[var(--text-primary)] group-hover:text-amber-600 truncate block">
+                                {book.title}
+                              </span>
+                            </div>
+                            {book.review.oneLiner && (
+                              <p className="text-[11px] text-[var(--text-muted)] italic truncate max-w-xs sm:max-w-md">
+                                "{book.review.oneLiner}"
+                              </p>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Author & Publisher */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="text-[var(--text-primary)] font-medium block">
+                            {book.author}
+                          </span>
+                          <span className="text-[11px] text-[var(--text-muted)]">
+                            {book.publisher}
+                          </span>
+                        </td>
+
+                        {/* Category */}
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                            {book.category}
+                          </span>
+                        </td>
+
+                        {/* Progress Bar & Pages */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 sm:w-24 h-1.5 rounded-full bg-[var(--border-color)] overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-300 ${
+                                  book.status === 'completed'
+                                    ? 'bg-emerald-500'
+                                    : 'bg-gradient-to-r from-amber-500 to-amber-600'
+                                }`}
+                                style={{ width: `${progressPct}%` }}
+                              />
+                            </div>
+                            <span className="text-[11px] font-mono text-[var(--text-primary)] font-medium">
+                              {progressPct}%
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-[var(--text-muted)] block mt-0.5">
+                            {book.currentPage} / {book.totalPages}p
+                          </span>
+                        </td>
+
+                        {/* Rating */}
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-1 text-amber-500 font-bold">
+                            <Star className="w-3.5 h-3.5 fill-amber-500" />
+                            <span>{book.review.rating.toFixed(1)}</span>
+                          </div>
+                        </td>
+
+                        {/* ISBN */}
+                        <td className="px-3 py-3 whitespace-nowrap font-mono text-[11px] text-[var(--text-muted)]">
+                          {book.isbn || '-'}
+                        </td>
+
+                        {/* Action / Link */}
+                        <td className="px-3 py-3 whitespace-nowrap text-right">
+                          {book.yes24Url && (
+                            <a
+                              href={book.yes24Url}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-1 rounded-md text-[var(--text-muted)] hover:text-amber-600 hover:bg-black/5 dark:hover:bg-white/5 inline-flex items-center gap-1"
+                              title="Yes24 바로가기"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-16 text-xs text-[var(--text-muted)]">
+              표시할 도서가 없습니다.
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   )
 }
+

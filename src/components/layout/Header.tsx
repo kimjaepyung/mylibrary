@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import {
   BookOpen,
   Library,
@@ -51,7 +51,21 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onExportGoogleDrive
 }) => {
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const goalPercentage = Math.min(100, Math.round((completedBooksCount / (annualGoal || 1)) * 100))
+
+  // Global Ctrl + K / Cmd + K search shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+        searchInputRef.current?.select()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <header className="app-header">
@@ -222,11 +236,12 @@ export const Header: React.FC<HeaderProps> = ({
             </select>
 
             {/* Search Input */}
-            <div className="relative flex-1 sm:w-56">
+            <div className="relative flex-1 sm:w-60">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
+                ref={searchInputRef}
                 type="text"
-                placeholder="책 제목, 저자, 수식, 키워드..."
+                placeholder="도서명, 저자, 수식... (Ctrl+K)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-amber-500"

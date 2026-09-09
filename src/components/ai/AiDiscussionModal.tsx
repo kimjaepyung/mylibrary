@@ -60,12 +60,32 @@ export const AiDiscussionModal: React.FC<AiDiscussionModalProps> = ({
     scrollToBottom()
   }, [messages])
 
-  // Quick Discussion Starters
-  const discussionStarters = [
-    `"${book.title}"의 핵심 논리를 수식 및 공학적 모델 관점에서 분석해줘`,
-    `내가 밑줄 친 인용구와 서평에 대해 다른 시각에서의 비판이나 보완점을 제안해줘`,
-    `이 책의 이론을 현실 프로젝트나 일상 문제 해결에 어떻게 적용할 수 있을까?`,
-    `저자가 책에서 명시하지 않았지만 숨겨진 한계점이나 전제 조건은 무엇일까?`
+  // 6 Core AI Discussion Prompt Presets
+  const discussionPresets = [
+    {
+      label: '💡 핵심 요약',
+      prompt: `『${book.title}』의 핵심 주장과 논리 전개 구조를 3가지 핵심 포인트로 명쾌하게 요약해줘.`
+    },
+    {
+      label: '❓ 심층 질문',
+      prompt: `이 책의 핵심 주제를 둘러싼 가장 깊이 있는 비판적 소크라테스식 질문 3가지를 제시하고 함께 토론해보자.`
+    },
+    {
+      label: '🌉 현실 적용',
+      prompt: `이 책에서 제시된 원리와 통찰을 일상과 실무 프로젝트 문제 해결에 적용할 수 있는 구체적인 액션 플랜을 제안해줘.`
+    },
+    {
+      label: '⚔️ 반론 제기',
+      prompt: `저자의 핵심 논거에 대해 다른 학파나 비판적 시각에서는 어떤 반론을 제기할 수 있는지 균형 있게 분석해줘.`
+    },
+    {
+      label: '📐 수식·원리 해설',
+      prompt: `이 책에 등장하거나 기반이 되는 핵심 수식/원리의 수학적·물리적 의미를 직관적으로 쉽게 해설해줘.`
+    },
+    {
+      label: '✍️ 집필 아이디어',
+      prompt: `이 책의 통찰을 바탕으로 집필할 만한 학술 칼럼이나 독서 에세이의 흥미로운 논제와 초고 개요를 기획해줘.`
+    }
   ]
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -285,16 +305,19 @@ export const AiDiscussionModal: React.FC<AiDiscussionModalProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Discussion Starters Chips */}
-        <div className="px-4 py-2 border-t border-[var(--border-color)] bg-[var(--bg-surface)] flex gap-2 overflow-x-auto">
-          {discussionStarters.map((starter, i) => (
+        {/* 6 Core Discussion Presets Chips */}
+        <div className="px-4 py-2 border-t border-[var(--border-color)] bg-[var(--bg-surface)] flex items-center gap-1.5 overflow-x-auto">
+          <span className="text-[10px] text-[var(--text-muted)] font-semibold shrink-0">추천 질문:</span>
+          {discussionPresets.map((preset, i) => (
             <button
               key={i}
-              onClick={() => handleSendMessage(starter)}
+              type="button"
+              onClick={() => handleSendMessage(preset.prompt)}
               disabled={isLoading}
-              className="text-[11px] px-3 py-1.5 rounded-full border border-[var(--border-color)] hover:border-amber-500/50 hover:bg-amber-500/10 text-[var(--text-secondary)] whitespace-nowrap transition-all flex-shrink-0"
+              title={preset.prompt}
+              className="text-[11px] px-2.5 py-1 rounded-full border border-[var(--border-color)] hover:border-amber-500 hover:bg-amber-500/10 text-[var(--text-primary)] hover:text-amber-600 font-medium whitespace-nowrap transition-all shrink-0 active:scale-95"
             >
-              💡 {starter}
+              {preset.label}
             </button>
           ))}
         </div>
