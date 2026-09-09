@@ -108,3 +108,13 @@ export interface Yes24SearchResult {
   toc?: string
   yes24Url?: string
 }
+
+export interface StudioDraft {
+  id: string
+  title: string
+  content: string // Markdown + LaTeX
+  tags?: string[]
+  createdAt: string
+  updatedAt: string
+}
+

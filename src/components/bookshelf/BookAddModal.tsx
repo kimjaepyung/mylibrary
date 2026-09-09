@@ -91,6 +91,9 @@ export const BookAddModal: React.FC<BookAddModalProps> = ({ onClose, onAddBook, 
     try {
       const results = await searchBooksFromYes24(queryToUse, settings)
       setSearchResults(results)
+      if (results.length > 0) {
+        handleSelectBook(results[0], 0)
+      }
     } catch (err) {
       console.error('Book search failed:', err)
     } finally {
@@ -191,7 +194,7 @@ export const BookAddModal: React.FC<BookAddModalProps> = ({ onClose, onAddBook, 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal-content max-w-3xl max-h-[92vh] flex flex-col"
+        className="modal-content max-w-4xl max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -283,81 +286,184 @@ export const BookAddModal: React.FC<BookAddModalProps> = ({ onClose, onAddBook, 
                 </div>
 
                 {searchResults.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-72 sm:max-h-80 overflow-y-auto pr-1">
-                    {searchResults.map((result, idx) => {
-                      const isSelected = selectedResultIndex === idx
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-3 max-h-[380px] overflow-hidden">
+                    
+                    {/* Left Column: Search Result List (5 cols) */}
+                    <div className="md:col-span-5 space-y-2 overflow-y-auto max-h-[380px] pr-1.5 border-r md:border-[var(--border-color)]">
+                      {searchResults.map((result, idx) => {
+                        const isSelected = selectedResultIndex === idx
 
-                      return (
-                        <div
-                          key={idx}
-                          onClick={() => handleSelectBook(result, idx)}
-                          className={`p-3 rounded-xl border transition-all cursor-pointer flex gap-3 items-start group relative ${
-                            isSelected
-                              ? 'bg-amber-500/10 border-amber-500 shadow-sm ring-1 ring-amber-500/50'
-                              : 'bg-[var(--bg-surface)] border-[var(--border-color)] hover:border-amber-500/60 hover:bg-amber-500/5'
-                          }`}
-                        >
-                          {/* Book Thumbnail */}
-                          <div className="w-12 h-16 rounded overflow-hidden flex-shrink-0 bg-zinc-800 shadow-sm border border-[var(--border-color)]">
-                            <img
-                              src={result.coverUrl}
-                              alt={result.title}
-                              referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                ;(e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80'
-                              }}
-                            />
-                          </div>
-
-                          {/* Book Meta */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300">
-                                {result.category || '도서'}
-                              </span>
-                              {result.publishDate && (
-                                <span className="text-[10px] text-[var(--text-muted)]">
-                                  {result.publishDate.slice(0, 4)}년
-                                </span>
-                              )}
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => handleSelectBook(result, idx)}
+                            className={`p-2.5 rounded-xl border transition-all cursor-pointer flex gap-2.5 items-start group relative ${
+                              isSelected
+                                ? 'bg-amber-500/15 border-amber-500 shadow-sm ring-1 ring-amber-500/50'
+                                : 'bg-[var(--bg-surface)] border-[var(--border-color)] hover:border-amber-500/60 hover:bg-amber-500/5'
+                            }`}
+                          >
+                            {/* Book Thumbnail */}
+                            <div className="w-10 h-14 rounded overflow-hidden shrink-0 bg-zinc-800 shadow-xs border border-[var(--border-color)]">
+                              <img
+                                src={result.coverUrl}
+                                alt={result.title}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  ;(e.target as HTMLImageElement).src =
+                                    'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80'
+                                }}
+                              />
                             </div>
 
-                            <h4 className="text-xs font-bold text-[var(--text-primary)] leading-tight group-hover:text-amber-600 line-clamp-1">
-                              {result.title}
-                            </h4>
-                            <p className="text-[11px] text-[var(--text-secondary)] truncate mt-0.5">
-                              {result.author} · {result.publisher}
-                            </p>
-
-                            <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-[var(--border-color)]/60 text-[10px]">
-                              <span className="font-mono text-[var(--text-muted)]">
-                                {result.isbn ? `ISBN: ${result.isbn}` : `${result.totalPages || 300}p`}
-                              </span>
-
-                              <div className="flex items-center gap-1.5">
-                                {result.yes24Url && (
-                                  <a
-                                    href={result.yes24Url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="text-[var(--text-muted)] hover:text-amber-600 flex items-center gap-0.5"
-                                    title="Yes24에서 확인"
-                                  >
-                                    <span>Yes24</span>
-                                    <ExternalLink className="w-2.5 h-2.5" />
-                                  </a>
+                            {/* Book Meta */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1 mb-0.5">
+                                <span className="text-[9px] px-1 py-0.2 rounded font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                                  {result.category || '도서'}
+                                </span>
+                                {result.publishDate && (
+                                  <span className="text-[9px] text-[var(--text-muted)]">
+                                    {result.publishDate.slice(0, 4)}년
+                                  </span>
                                 )}
-                                <span className={`font-semibold flex items-center gap-0.5 ${isSelected ? 'text-emerald-600' : 'text-amber-600'}`}>
+                              </div>
+
+                              <h4 className="text-xs font-bold text-[var(--text-primary)] leading-tight group-hover:text-amber-600 line-clamp-1">
+                                {result.title}
+                              </h4>
+                              <p className="text-[10px] text-[var(--text-secondary)] truncate mt-0.5">
+                                {result.author} · {result.publisher}
+                              </p>
+
+                              <div className="flex items-center justify-between mt-1 pt-1 border-t border-[var(--border-color)]/60 text-[10px]">
+                                <span className="font-mono text-[var(--text-muted)] text-[9px]">
+                                  {result.totalPages || 300}p
+                                </span>
+                                <span
+                                  className={`font-semibold text-[10px] flex items-center gap-0.5 ${
+                                    isSelected ? 'text-emerald-600' : 'text-amber-600'
+                                  }`}
+                                >
                                   {isSelected ? <CheckCircle2 className="w-3 h-3" /> : '선택'}
                                 </span>
                               </div>
                             </div>
                           </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Right Column: Selected Book Detailed Preview & Full TOC (7 cols) */}
+                    <div className="md:col-span-7 bg-[var(--bg-surface)] p-3 rounded-xl border border-[var(--border-color)] flex flex-col justify-between overflow-y-auto max-h-[380px] space-y-3">
+                      {selectedResultIndex !== null && searchResults[selectedResultIndex] ? (
+                        (() => {
+                          const activeBook = searchResults[selectedResultIndex]
+                          return (
+                            <>
+                              <div>
+                                {/* Header Preview: Big Cover + Title + Details */}
+                                <div className="flex gap-3 items-start pb-2.5 border-b border-[var(--border-color)]">
+                                  <div className="w-16 h-22 rounded-lg overflow-hidden shrink-0 bg-zinc-800 shadow-md border border-[var(--border-color)]">
+                                    <img
+                                      src={activeBook.coverUrl}
+                                      alt={activeBook.title}
+                                      referrerPolicy="no-referrer"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        ;(e.target as HTMLImageElement).src =
+                                          'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80'
+                                      }}
+                                    />
+                                  </div>
+
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                        {activeBook.category || '일반 도서'}
+                                      </span>
+                                      {activeBook.yes24Url && (
+                                        <a
+                                          href={activeBook.yes24Url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-[10px] text-amber-600 hover:underline flex items-center gap-0.5 ml-auto"
+                                        >
+                                          <span>Yes24 링크</span>
+                                          <ExternalLink className="w-2.5 h-2.5" />
+                                        </a>
+                                      )}
+                                    </div>
+                                    <h4 className="font-serif font-bold text-sm text-[var(--text-primary)] leading-snug line-clamp-2">
+                                      {activeBook.title}
+                                    </h4>
+                                    <p className="text-xs text-[var(--text-secondary)] mt-1">
+                                      {activeBook.author} 지음 · {activeBook.publisher}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-[var(--text-muted)] font-mono">
+                                      <span>출간: {activeBook.publishDate || '미상'}</span>
+                                      <span>•</span>
+                                      <span>{activeBook.totalPages || 300} 페이지</span>
+                                      {activeBook.isbn && (
+                                        <>
+                                          <span>•</span>
+                                          <span>ISBN: {activeBook.isbn}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Full Table of Contents (TOC) Preview Box */}
+                                {activeBook.toc && (
+                                  <div className="mt-2.5">
+                                    <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1 mb-1">
+                                      <Layers className="w-3 h-3" />
+                                      <span>상세 목차 (TOC)</span>
+                                    </span>
+                                    <div className="text-[11px] font-mono leading-relaxed p-2 rounded-lg bg-[var(--bg-app)] text-[var(--text-secondary)] max-h-28 overflow-y-auto whitespace-pre-line border border-[var(--border-color)]">
+                                      {activeBook.toc}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Book Description / Summary */}
+                                {activeBook.description && (
+                                  <div className="mt-2">
+                                    <span className="text-[11px] font-bold text-[var(--text-primary)] block mb-1">
+                                      책 소개 줄거리
+                                    </span>
+                                    <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed line-clamp-3">
+                                      {activeBook.description}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Bottom Auto-fill Confirmed Badge */}
+                              <div className="pt-2 border-t border-[var(--border-color)] flex items-center justify-between">
+                                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>아래 폼에 정보가 자동 입력되었습니다</span>
+                                </span>
+                                <a
+                                  href="#book-add-form"
+                                  className="text-[11px] px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-medium"
+                                >
+                                  세부정보 편집 및 등록 ↓
+                                </a>
+                              </div>
+                            </>
+                          )
+                        })()
+                      ) : (
+                        <div className="h-full flex items-center justify-center text-xs text-[var(--text-muted)]">
+                          좌측 목록에서 도서를 선택해주세요.
                         </div>
-                      )
-                    })}
+                      )}
+                    </div>
+
                   </div>
                 ) : (
                   <p className="text-xs text-[var(--text-muted)] py-2 text-center">

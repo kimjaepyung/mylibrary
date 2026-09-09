@@ -15,7 +15,7 @@ import {
   ExternalLink,
   RotateCcw
 } from 'lucide-react'
-import { AppSettings, Book } from '../../types/book'
+import { AppSettings, Book, StudioDraft } from '../../types/book'
 import {
   downloadGoogleDriveBackupFile,
   parseBackupFile,
@@ -27,7 +27,11 @@ interface SettingsModalProps {
   books: Book[]
   onClose: () => void
   onSaveSettings: (newSettings: AppSettings) => void
-  onRestoreBackup: (restoredBooks: Book[], restoredSettings: AppSettings) => void
+  onRestoreBackup: (
+    restoredBooks: Book[],
+    restoredSettings: AppSettings,
+    restoredDrafts?: StudioDraft[]
+  ) => void
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -64,15 +68,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setRestoreError(null)
 
     try {
-      const { books: loadedBooks, settings: loadedSettings } = await parseBackupFile(file)
+      const { books: loadedBooks, settings: loadedSettings, drafts: loadedDrafts } =
+        await parseBackupFile(file)
       if (
         window.confirm(
-          `백업 파일에서 ${loadedBooks.length}권의 도서 및 독서 기록을 복원하시겠습니까? 현재 서재 데이터가 덮어씌워집니다.`
+          `백업 파일에서 ${loadedBooks.length}권의 도서 및 기록을 복원하시겠습니까? 현재 서재 데이터가 덮어씌워집니다.`
         )
       ) {
-        onRestoreBackup(loadedBooks, loadedSettings)
+        onRestoreBackup(loadedBooks, loadedSettings, loadedDrafts)
         setFormData(loadedSettings)
-        setRestoreMessage(`성공적으로 ${loadedBooks.length}권의 도서 및 기록을 복원했습니다! 🎉`)
+        setRestoreMessage(`성공적으로 ${loadedBooks.length}권의 도서 및 초고 기록을 복원했습니다! 🎉`)
       }
     } catch (err: any) {
       setRestoreError(err.message || '백업 파일 복원에 실패했습니다.')

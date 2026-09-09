@@ -1,7 +1,8 @@
-import { Book, AppSettings } from '../types/book'
+import { Book, AppSettings, StudioDraft } from '../types/book'
 
 const STORAGE_KEY_BOOKS = 'my_personal_library_books_v1'
 const STORAGE_KEY_SETTINGS = 'my_personal_library_settings_v1'
+const STORAGE_KEY_DRAFTS = 'my_personal_library_drafts_v1'
 
 export const DEFAULT_SETTINGS: AppSettings = {
   geminiApiKey: '',
@@ -331,6 +332,65 @@ export function saveSettings(settings: AppSettings): void {
   }
 }
 
+export const SAMPLE_DRAFTS: StudioDraft[] = [
+  {
+    id: 'draft-1',
+    title: '미적분의 물리적 직관과 실생활 동역학 모델링',
+    tags: ['수학', '미적분', '에세이', '학술초고'],
+    content: `# 미적분의 물리적 직관과 실생활 동역학 모델링
+
+> "미분은 순간의 찰나를 들여다보는 돋보기이고, 적분은 그 무수한 찰나를 엮어 거대한 변화를 이해하는 망원경이다."
+> — 『미적분으로 바라본 하루』(오스카 E. 페르난데스)
+
+## 1. 서론: 변화율(Rate of Change)의 본질
+인류가 자연의 법칙을 정량화할 수 있게 된 결정적 계기는 **변화율**을 수학적으로 다루기 시작하면서부터이다. 
+뉴턴(Isaac Newton)과 라이프니츠(Gottfried Leibniz)가 독립적으로 정립한 미적분학은 단순한 기하학적 계산을 넘어 연속적인 물리계의 상태 변화를 기술하는 강력한 도구가 되었다.
+
+## 2. 일상 속 뉴턴의 냉각 법칙 (Newton's Law of Cooling)
+커피를 잔에 따랐을 때 온도가 감소하는 현상은 주변 환경과의 열교환으로 설명된다:
+
+$$\\frac{dT}{dt} = -k(T - T_a)$$
+
+여기서 $T(t)$는 시간 $t$에서의 커피 온도이며, $T_a$는 주변 환경 온도, $k > 0$는 냉각 비례 상수이다.
+양변을 분리하여 적분하면 다음과 같은 해를 유도할 수 있다:
+
+$$\\int \\frac{1}{T - T_a} dT = -\\int k \\, dt$$
+
+$$\\ln|T - T_a| = -kt + C$$
+
+$$T(t) = T_a + (T_0 - T_a)e^{-kt}$$
+
+## 3. 결론 및 고찰
+수학적 모델링은 복잡한 세계를 단순하고 우아한 원리로 통찰할 수 있는 눈을 제공한다. 독서를 통해 체득한 개념들을 수치화하고 모델링하는 과정이야말로 진정한 지식 내재화의 첫걸음이다.
+`,
+    createdAt: '2026-08-16T14:20:00Z',
+    updatedAt: '2026-08-20T17:45:00Z'
+  }
+]
+
+export function loadDrafts(): StudioDraft[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_DRAFTS)
+    if (!raw) {
+      saveDrafts(SAMPLE_DRAFTS)
+      return SAMPLE_DRAFTS
+    }
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : SAMPLE_DRAFTS
+  } catch (err) {
+    console.error('Failed to load drafts from localStorage:', err)
+    return SAMPLE_DRAFTS
+  }
+}
+
+export function saveDrafts(drafts: StudioDraft[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_DRAFTS, JSON.stringify(drafts))
+  } catch (err) {
+    console.error('Failed to save drafts to localStorage:', err)
+  }
+}
+
 // Google Drive Backup & Export (Requirement 8)
 export interface BackupData {
   version: string
@@ -338,24 +398,37 @@ export interface BackupData {
   exportDate: string
   targetPlatform: string
   totalBooks: number
+  totalDrafts?: number
   settings: AppSettings
   books: Book[]
+  drafts?: StudioDraft[]
 }
 
-export function createGoogleDriveBackupData(books: Book[], settings: AppSettings): BackupData {
+export function createGoogleDriveBackupData(
+  books: Book[],
+  settings: AppSettings,
+  drafts?: StudioDraft[]
+): BackupData {
+  const currentDrafts = drafts || loadDrafts()
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     app: 'My Personal Library',
     exportDate: new Date().toISOString(),
     targetPlatform: 'Google Drive / Local Storage',
     totalBooks: books.length,
+    totalDrafts: currentDrafts.length,
     settings,
-    books
+    books,
+    drafts: currentDrafts
   }
 }
 
-export function downloadGoogleDriveBackupFile(books: Book[], settings: AppSettings): void {
-  const backupData = createGoogleDriveBackupData(books, settings)
+export function downloadGoogleDriveBackupFile(
+  books: Book[],
+  settings: AppSettings,
+  drafts?: StudioDraft[]
+): void {
+  const backupData = createGoogleDriveBackupData(books, settings, drafts)
   const jsonStr = JSON.stringify(backupData, null, 2)
   const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' })
   const url = URL.createObjectURL(blob)
@@ -373,7 +446,9 @@ export function downloadGoogleDriveBackupFile(books: Book[], settings: AppSettin
   URL.revokeObjectURL(url)
 }
 
-export async function parseBackupFile(file: File): Promise<{ books: Book[]; settings: AppSettings }> {
+export async function parseBackupFile(
+  file: File
+): Promise<{ books: Book[]; settings: AppSettings; drafts?: StudioDraft[] }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -383,6 +458,7 @@ export async function parseBackupFile(file: File): Promise<{ books: Book[]; sett
         
         let loadedBooks: Book[] = []
         let loadedSettings: AppSettings = DEFAULT_SETTINGS
+        let loadedDrafts: StudioDraft[] | undefined = undefined
 
         if (Array.isArray(parsed)) {
           // Direct array of books
@@ -393,11 +469,14 @@ export async function parseBackupFile(file: File): Promise<{ books: Book[]; sett
           if (parsed.settings) {
             loadedSettings = { ...DEFAULT_SETTINGS, ...parsed.settings }
           }
+          if (Array.isArray(parsed.drafts)) {
+            loadedDrafts = parsed.drafts
+          }
         } else {
           throw new Error('올바른 서재 백업 JSON 형식이 아닙니다.')
         }
 
-        resolve({ books: loadedBooks, settings: loadedSettings })
+        resolve({ books: loadedBooks, settings: loadedSettings, drafts: loadedDrafts })
       } catch (err: any) {
         reject(new Error(err.message || '백업 파일을 읽는 중 오류가 발생했습니다.'))
       }
@@ -406,3 +485,4 @@ export async function parseBackupFile(file: File): Promise<{ books: Book[]; sett
     reader.readAsText(file)
   })
 }
+

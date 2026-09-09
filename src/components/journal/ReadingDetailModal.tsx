@@ -20,7 +20,10 @@ import {
   Copy,
   Check,
   History,
-  FunctionSquare
+  FunctionSquare,
+  ChevronDown,
+  ChevronUp,
+  Sliders
 } from 'lucide-react'
 import { Book, Quote, ActionItem, ReadingStatus, ReadingSession, AiDiscussionInsight } from '../../types/book'
 import { LatexRenderer } from '../common/LatexRenderer'
@@ -47,6 +50,7 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
   const [isEditingReview, setIsEditingReview] = useState(false)
   const [editedReview, setEditedReview] = useState(book.review)
   const [activeEditorField, setActiveEditorField] = useState<'summary' | 'rawMarkdown' | 'quote' | null>('summary')
+  const [isTocOpen, setIsTocOpen] = useState(false)
 
   // Quotes state
   const [newQuoteText, setNewQuoteText] = useState('')
@@ -476,27 +480,69 @@ export const ReadingDetailModal: React.FC<ReadingDetailModalProps> = ({
             </button>
           </div>
 
-          {/* Reading Progress Bar in Header */}
-          <div className="hidden sm:flex items-center gap-2 text-xs">
-            <span className="text-[var(--text-muted)]">진행도:</span>
+          {/* Reading Progress Slider in Header */}
+          <div className="flex items-center gap-2.5 text-xs py-1">
+            <span className="text-[var(--text-muted)] text-[11px] hidden md:inline">진행도:</span>
             <input
-              type="number"
+              type="range"
               min="0"
-              max={book.totalPages}
+              max={book.totalPages || 100}
               value={book.currentPage}
               onChange={(e) => handleProgressChange(parseInt(e.target.value) || 0)}
-              className="w-14 px-1.5 py-0.5 text-center text-xs font-mono rounded border border-[var(--border-color)] bg-[var(--bg-surface-secondary)]"
+              aria-label="독서 진행률 슬라이더"
+              className="w-24 sm:w-32 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              title="슬라이더를 드래그하여 진행률 조절"
             />
-            <span className="text-[var(--text-muted)]">/ {book.totalPages}p</span>
-            <span className="font-semibold text-amber-600 dark:text-amber-400">
-              ({Math.round((book.currentPage / (book.totalPages || 1)) * 100)}%)
-            </span>
+            <div className="flex items-center gap-1 font-mono text-xs">
+              <input
+                type="number"
+                min="0"
+                max={book.totalPages}
+                value={book.currentPage}
+                onChange={(e) => handleProgressChange(parseInt(e.target.value) || 0)}
+                aria-label="현재 읽은 쪽수"
+                className="w-12 sm:w-14 px-1 py-0.5 text-center text-xs font-mono rounded border border-[var(--border-color)] bg-[var(--bg-surface-secondary)]"
+              />
+              <span className="text-[var(--text-muted)] text-[11px]">/ {book.totalPages}p</span>
+              <span className="font-semibold text-amber-600 dark:text-amber-400 text-xs ml-0.5">
+                ({Math.round((book.currentPage / (book.totalPages || 1)) * 100)}%)
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-6">
+        <div className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-5">
           
+          {/* Collapsible Table of Contents (TOC) Accordion Banner */}
+          {book.toc && (
+            <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface-secondary)]/70 overflow-hidden transition-all">
+              <button
+                type="button"
+                onClick={() => setIsTocOpen(!isTocOpen)}
+                className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-bold text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-left"
+              >
+                <span className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-amber-600" />
+                  <span>도서 전체 목차 (Table of Contents)</span>
+                  <span className="text-[11px] font-normal text-[var(--text-muted)]">
+                    {book.toc.split('\n').filter((l) => l.trim().length > 0).length}개 챕터 수록
+                  </span>
+                </span>
+                <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                  <span>{isTocOpen ? '목차 접기' : '목차 펼쳐보기'}</span>
+                  {isTocOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </span>
+              </button>
+
+              {isTocOpen && (
+                <div className="px-4 pb-3.5 pt-1 border-t border-[var(--border-color)]/60 text-xs font-mono text-[var(--text-secondary)] max-h-48 overflow-y-auto whitespace-pre-line leading-relaxed">
+                  {book.toc}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* TAB 1: 독서 기록 및 서평 (Journal & Review) */}
           {activeTab === 'journal' && (
             <div className="space-y-6">

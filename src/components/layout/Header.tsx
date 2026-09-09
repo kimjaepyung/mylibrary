@@ -11,13 +11,14 @@ import {
   Cloud,
   Moon,
   Sun,
-  Flame
+  Flame,
+  Feather
 } from 'lucide-react'
 import { AppSettings } from '../../types/book'
 
 interface HeaderProps {
-  currentTab: 'shelf' | 'timeline' | 'quotes' | 'stats'
-  setCurrentTab: (tab: 'shelf' | 'timeline' | 'quotes' | 'stats') => void
+  currentTab: 'shelf' | 'timeline' | 'quotes' | 'studio' | 'stats'
+  setCurrentTab: (tab: 'shelf' | 'timeline' | 'quotes' | 'studio' | 'stats') => void
   searchQuery: string
   setSearchQuery: (query: string) => void
   selectedCategory: string
@@ -177,6 +178,18 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <QuoteIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>문장 수집함</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab('studio')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                currentTab === 'studio'
+                  ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 font-semibold shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface-secondary)]'
+              }`}
+            >
+              <Feather className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>집필 스튜디오</span>
             </button>
 
             <button

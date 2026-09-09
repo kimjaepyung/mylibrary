@@ -3,13 +3,16 @@ import {
   Book,
   AppSettings,
   Quote,
-  ReadingStatus
+  ReadingStatus,
+  StudioDraft
 } from './types/book'
 import {
   loadBooks,
   saveBooks,
   loadSettings,
   saveSettings,
+  loadDrafts,
+  saveDrafts,
   downloadGoogleDriveBackupFile
 } from './services/storage'
 import { Header } from './components/layout/Header'
@@ -20,14 +23,16 @@ import { AiDiscussionModal } from './components/ai/AiDiscussionModal'
 import { SettingsModal } from './components/settings/SettingsModal'
 import { QuoteCardModal } from './components/quotes/QuoteCardModal'
 import { ReadingStatsView } from './components/stats/ReadingStatsView'
+import { WritingStudioView } from './components/studio/WritingStudioView'
 import { LatexRenderer } from './components/common/LatexRenderer'
 import { Quote as QuoteIcon, Share2, Search, Sparkles, BookOpen } from 'lucide-react'
 
 export function App() {
   const [books, setBooks] = useState<Book[]>(() => loadBooks())
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings())
+  const [drafts, setDrafts] = useState<StudioDraft[]>(() => loadDrafts())
 
-  const [currentTab, setCurrentTab] = useState<'shelf' | 'timeline' | 'quotes' | 'stats'>('shelf')
+  const [currentTab, setCurrentTab] = useState<'shelf' | 'timeline' | 'quotes' | 'studio' | 'stats'>('shelf')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('ALL')
 
@@ -38,10 +43,14 @@ export function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
 
-  // Save books and settings to localStorage
+  // Save books, settings and drafts to localStorage
   useEffect(() => {
     saveBooks(books)
   }, [books])
+
+  useEffect(() => {
+    saveDrafts(drafts)
+  }, [drafts])
 
   useEffect(() => {
     saveSettings(settings)
@@ -86,12 +95,19 @@ export function App() {
 
   // Backup & Restore Handlers
   const handleExportGoogleDrive = () => {
-    downloadGoogleDriveBackupFile(books, settings)
+    downloadGoogleDriveBackupFile(books, settings, drafts)
   }
 
-  const handleRestoreBackup = (restoredBooks: Book[], restoredSettings: AppSettings) => {
+  const handleRestoreBackup = (
+    restoredBooks: Book[],
+    restoredSettings: AppSettings,
+    restoredDrafts?: StudioDraft[]
+  ) => {
     setBooks(restoredBooks)
     setSettings(restoredSettings)
+    if (restoredDrafts && restoredDrafts.length > 0) {
+      setDrafts(restoredDrafts)
+    }
   }
 
   const handleToggleTheme = () => {
@@ -237,7 +253,16 @@ export function App() {
           </div>
         )}
 
-        {/* TAB 4: Stats View */}
+        {/* TAB 4: Writing Studio */}
+        {currentTab === 'studio' && (
+          <WritingStudioView
+            books={books}
+            drafts={drafts}
+            onSaveDrafts={setDrafts}
+          />
+        )}
+
+        {/* TAB 5: Stats View */}
         {currentTab === 'stats' && (
           <ReadingStatsView
             books={books}
