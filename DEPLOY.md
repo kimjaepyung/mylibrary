@@ -1,6 +1,9 @@
 # 📚 나만의 개인 서재 (My Personal Library) 배포 및 연동 가이드
 
-본 프로젝트는 **내가 읽은 책 중심의 독서 아카이브**, **Yes24 도서/ISBN 정보 연동**, **Google Gemini / OpenAI AI 심층 독서 토론 및 하단 요약 저장**, **수학/공학 LaTeX 수식 지원**, 그리고 **Google Drive 클라우드 백업**을 완벽하게 지원합니다.
+> **🌐 현재 라이브 운영 사이트**: **[https://mylibrary-rose.vercel.app](https://mylibrary-rose.vercel.app)**  
+> **📦 GitHub 원격 저장소**: **[https://github.com/kimjaepyung/mylibrary](https://github.com/kimjaepyung/mylibrary)**
+
+본 프로젝트는 **내가 읽은 책 중심의 독서 아카이브**, **Yes24 도서/ISBN 정보 연동**, **지식 집필 스튜디오**, **Google Gemini / OpenAI AI 심층 독서 토론 및 하단 요약 저장**, **수학/공학 LaTeX 수식 지원**, 그리고 **Google Drive 클라우드 백업**을 완벽하게 지원합니다.
 
 ---
 

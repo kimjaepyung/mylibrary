@@ -2,6 +2,11 @@
 
 > **내가 읽은 책 중심의 깊이 있는 독서 기록장**, **Yes24 도서/ISBN 정보 자동 연동**, **AI 심층 독서 토론 및 하단 요약 영구 보관**, **수학/공학 LaTeX 수식 렌더링**, 그리고 **Google Drive 클라우드 백업**을 지원하는 모던 개인 디지털 서재 웹 애플리케이션입니다.
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-mylibrary--rose.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://mylibrary-rose.vercel.app/)
+
+- **🌐 공식 실서비스 웹사이트**: **[https://mylibrary-rose.vercel.app/](https://mylibrary-rose.vercel.app/)**
+- **📦 GitHub 저장소**: **[https://github.com/kimjaepyung/mylibrary](https://github.com/kimjaepyung/mylibrary)**
+
 ![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)
 ![React 18](https://img.shields.io/badge/React-18.3-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6.svg)
